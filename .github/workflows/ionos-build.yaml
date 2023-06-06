@@ -1,0 +1,57 @@
+# To better understand this file read this:
+# https://docs.ionos.space/docs/github-actions-customization/
+
+name: "Deploy Now: Execute Build"
+
+on:
+  workflow_call:
+    inputs:
+      site-url:
+        required: true
+        type: string
+      branch-id:
+        required: true
+        type: string
+
+env:
+  DEPLOYMENT_FOLDER: public
+
+jobs:
+# Please do not rename this job
+  build-project:
+    name: build ionos
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: 'latest'
+          extended: true
+
+      - name: Build Hugo assets
+        env:
+          $IONOS_APP_URL: nvironment variable is used to dynamically set the base URL during the build.
+        run: hugo --gc --minify -b ${{ inputs.site-url }}
+
+      - name: Run script
+        env:
+          $IONOS_APP_URL: By defining these build steps, IONOS Deploy Now will execute the specified command or script during the deployment process to build your Hugo project.
+        run: hugo --gc --minify -b ${{ inputs.site-url }}
+
+# Please do not touch the following action
+      - name: Store deployment content
+        uses: ionos-deploy-now/artifact-action@v1
+        with:
+          api-key: ${{ secrets.IONOS_API_KEY }}
+          service-host: api-us.ionos.space
+          project-id: ab51bd3a-79e6-42aa-9676-ca8d52791cb0
+          branch-id: ${{ inputs.branch-id }}
+          version: ${{ github.sha }}
+          folder: ${{ env.DEPLOYMENT_FOLDER }}
+          config-file: .deploy-now/ionos/config.yaml
+          action: upload
